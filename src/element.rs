@@ -736,7 +736,15 @@ impl<State: ValidState, E: CustomElement<State>, C: ElementDiffer<State>> Elemen
 		let child_parent_space = match inner_map.get::<State, E>(inner_key) {
 			Some(ElementInner::Done(_, spatial_ref)) => watch::channel(Some(spatial_ref.clone())).1,
 			Some(ElementInner::Creating(Some(v))) => v.pending_spatial.clone(),
-			_ => {
+			Some(ElementInner::Error(err)) => {
+				tracing::error!("inner creation failed for {inner_key:X}: {err}");
+				parent_space
+			}
+			Some(ElementInner::Creating(None)) => {
+				tracing::error!("ElementInner::Creating(None), should be unreachable?");
+				parent_space
+			}
+			None => {
 				tracing::warn!("failed to get valid inner, using parent space");
 				parent_space
 			}
